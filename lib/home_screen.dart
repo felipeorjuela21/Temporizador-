@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'temporizador_viewmodel.dart';
@@ -11,13 +9,13 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aplicaciones Instaladas'),
+        title: Text('Aplicaciones Instaladas'),
         backgroundColor: Colors.teal,
       ),
       body: Consumer<TemporizadorViewModel>(
         builder: (context, viewModel, child) {
           if (viewModel.installedApps.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(child: CircularProgressIndicator());
           }
 
           return Column(
@@ -33,24 +31,38 @@ class HomePage extends StatelessWidget {
                       color: isSelected ? Colors.teal[100] : Colors.white,
                       child: ListTile(
                         leading: app.icon != null
-                            ? Image.memory(app.icon! as Uint8List,
-                                width: 40, height: 40)
-                            : const Icon(Icons.device_unknown, size: 40),
+                            ? Image.memory(app.icon!, width: 40, height: 40)
+                            : Icon(Icons.device_unknown, size: 40),
                         title: Text(app.appName,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(app.packageName),
-                        trailing: isSelected
-                            ? IconButton(
-                                icon: const Icon(Icons.remove_circle,
-                                    color: Colors.red),
-                                onPressed: () => viewModel.untrackApp(app),
-                              )
-                            : IconButton(
-                                icon: const Icon(Icons.add_circle,
-                                    color: Colors.green),
-                                onPressed: () => viewModel.trackApp(app),
-                              ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            isSelected
+                                ? IconButton(
+                                    icon: Icon(Icons.remove_circle,
+                                        color: Colors.red),
+                                    onPressed: () => viewModel.untrackApp(app),
+                                  )
+                                : IconButton(
+                                    icon: Icon(Icons.add_circle,
+                                        color: Colors.green),
+                                    onPressed: () => viewModel.trackApp(app),
+                                  ),
+                            IconButton(
+                              icon: Icon(Icons.timer),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          TimerPage(appName: app.appName)),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                         onTap: isSelected
                             ? null
                             : () {
@@ -60,16 +72,6 @@ class HomePage extends StatelessWidget {
                     );
                   },
                 ),
-              ),
-              const UsageChart(),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => TimerScreen()),
-                  );
-                },
-                child: const Text('Ver Gráfico de Uso'),
               ),
             ],
           );
@@ -92,7 +94,19 @@ class HomePage extends StatelessWidget {
         ],
         currentIndex: 0,
         selectedItemColor: Colors.teal,
-        onTap: (index) {},
+        onTap: (index) {
+          switch (index) {
+            case 0:
+              // Home
+              break;
+            case 1:
+              Navigator.pushNamed(context, '/chart');
+              break;
+            case 2:
+              Navigator.pushNamed(context, '/settings');
+              break;
+          }
+        },
       ),
     );
   }

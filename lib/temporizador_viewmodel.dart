@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:device_apps/device_apps.dart' as device_apps;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'model/application.dart' as my_app;
+import '../model/application.dart' as my_app;
 
 class TemporizadorViewModel extends ChangeNotifier {
   List<my_app.Application> _installedApps = [];
   List<my_app.Application> _trackedApps = [];
   SharedPreferences? _prefs;
+  ThemeMode _themeMode = ThemeMode.light;
 
   List<my_app.Application> get installedApps => _installedApps;
   List<my_app.Application> get trackedApps => _trackedApps;
+  ThemeMode get themeMode => _themeMode;
 
   TemporizadorViewModel() {
     _loadPrefs();
@@ -20,6 +22,7 @@ class TemporizadorViewModel extends ChangeNotifier {
   Future<void> _loadPrefs() async {
     _prefs = await SharedPreferences.getInstance();
     _loadTrackedApps();
+    _loadThemeMode();
   }
 
   Future<void> _loadTrackedApps() async {
@@ -39,20 +42,20 @@ class TemporizadorViewModel extends ChangeNotifier {
   }
 
   Future<void> fetchInstalledApps() async {
-    List<my_app.Application> apps =
-        (await device_apps.DeviceApps.getInstalledApplications(
+    List<device_apps.Application> apps =
+        await device_apps.DeviceApps.getInstalledApplications(
       onlyAppsWithLaunchIntent: true,
       includeSystemApps: true,
       includeAppIcons: true,
-    ))
-            .map((app) {
-      return my_app.Application(
-        appName: app.appName,
-        packageName: app.packageName, // assuming icon is of type Uint8List
-      );
-    }).toList();
+    );
 
-    _installedApps = apps;
+    _installedApps = apps
+        .map((app) => my_app.Application(
+              appName: app.appName,
+              packageName: app.packageName,
+              icon: app is device_apps.ApplicationWithIcon ? app.icon : null,
+            ))
+        .toList();
     notifyListeners();
   }
 
@@ -79,5 +82,20 @@ class TemporizadorViewModel extends ChangeNotifier {
       _saveTrackedApps();
       notifyListeners();
     }
+  }
+
+  Future<void> _loadThemeMode() async {
+    final String? themeMode = _prefs?.getString('theme_mode');
+    if (themeMode != null) {
+      _themeMode =
+          ThemeMode.values.firstWhere((mode) => mode.toString() == themeMode);
+      notifyListeners();
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    await _prefs?.setString('theme_mode', mode.toString());
+    notifyListeners();
   }
 }
